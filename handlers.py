@@ -15,7 +15,7 @@ router = Router()
 #     await msg.answer(f"Твой ID: {msg.from_user.id}")
 
 
-@router.message(Command("hello-world"))
+@router.message(Command("hello_world"))
 async def helloworld_handler(msg: Message):
     name = msg.from_user.full_name
     await msg.answer(f"Привет, мир и привет {name}")
