@@ -1,13 +1,12 @@
 from typing import Dict, Union
 from utils.api_reqwest import request_to_api
-from config_data.config import RAPID_API_KEY
+from config_data.config import RAPID_API_HEADERS
+from loguru import logger
 
-headers = {
-    "X-RapidAPI-Key": RAPID_API_KEY,
-    "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
-}
+headers = RAPID_API_HEADERS
 
 
+@logger.catch
 def parse_cities_dict(city: str) -> Union[Dict[str, str], None]:
     """
         Функция делает запрос в request_to_api и десериализирует результат. Если запрос получен и десериализация прошла -
@@ -20,7 +19,6 @@ def parse_cities_dict(city: str) -> Union[Dict[str, str], None]:
     querystring = {"q": city, "locale": "ru_RU", "langid": "1033", "siteid": "300000001"}
     response = request_to_api(url, headers=headers, querystring=querystring)
     json_data = response.json()
-    print(json_data)
     cityes = dict()
     for result in json_data["sr"]:
         if result.get("type") in ["CITY", "NEIGHBORHOOD"]:
@@ -30,6 +28,3 @@ def parse_cities_dict(city: str) -> Union[Dict[str, str], None]:
                 cityes[short_name] = id
 
     return cityes
-
-
-

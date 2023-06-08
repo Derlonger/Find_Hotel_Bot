@@ -10,7 +10,13 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 DEFAULT_COMMANDS = (
     ("start", "Запустить бота"),
-    ("help", "Вывести справку")
+    ("help", "Вывести справку"),
+    ("lowprice", "Топ отелей по низкой цене")
 )
 
+RAPID_API_HEADERS = {
+    "X-RapidAPI-Key": RAPID_API_KEY,
+    "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
+}
 
+LOG_PATH = os.path.abspath(os.path.join('logs', 'debug.log'))
