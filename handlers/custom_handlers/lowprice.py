@@ -1,10 +1,12 @@
 from loader import bot
 from telebot.types import Message
 from states.search_info import UserStates
+from handlers import survey_handlers  # noqa
 
 
 @bot.message_handler(commands=['lowprice'])
 def bot_low_price(message: Message) -> None:
+    print("Была введена команда lowprice")
     """
     Функция, реагирующая на команду 'lowprice'.
     Записывает состояние пользователя 'last_command' и предлагает ввести город для поиска отелей.

@@ -1,12 +1,10 @@
 from typing import Dict, Union
 from utils.api_reqwest import request_to_api
 from config_data.config import RAPID_API_HEADERS
-from loguru import logger
 
 headers = RAPID_API_HEADERS
 
 
-@logger.catch
 def parse_cities_dict(city: str) -> Union[Dict[str, str], None]:
     """
         Функция делает запрос в request_to_api и десериализирует результат. Если запрос получен и десериализация прошла -
