@@ -46,8 +46,10 @@ def clarify_city(call: CallbackQuery) -> None:
     :return: Сообщение Telegram
     """
     print(call.data)
-    bot.edit_message_reply_markup(call.message.chat.id, call.message.chat.id, reply_markup=None)
-    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.edit_message_reply_markup(chat_id=call.message.chat.id,
+                                  message_id=call.message.chat.id, reply_markup=None)
+    bot.delete_message(chat_id=call.message.chat.id,
+                       message_id=call.message.message_id)
 
     with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
         data['city_id'] = re.search(r'\d+', call.data).group()
