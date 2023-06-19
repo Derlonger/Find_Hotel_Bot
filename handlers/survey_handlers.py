@@ -123,3 +123,32 @@ def need_photo_reply(call: CallbackQuery) -> None:
             bot.send_message(call.message.chat.id, text='Нажмите кнопку "Да" или "Нет"')
 
 
+@bot.message_handler(state=UserStates.amount_photo, is_digit=False)
+def amount_photo_incorrect(message: Message) -> None:
+    """
+    Функция, ожидающая некорректный ввод количества фото.
+    Если количество фото - не число - выводит сообщение об ошибке.
+
+    Args:
+        message: Сообщение Telegram
+    Returns:None
+    """
+    bot.send_message(message.from_user.id, "Количество фото от 1 до 10. Повторите попытку.")
+
+
+@bot.message_handler(state=UserStates.amount_photo, is_digit=True)
+def get_amount_photo(message: Message) -> None:
+    """
+    Функция, ожидающая корректный ввод количества фото.
+    Записывает состояние пользователя 'amount_photo' и показывает клавиатуру-календарь с выбором даты заезда.
+    Args:
+        message: Сообщение Telegram
+    Returns: None
+    """
+    if 1 <= int(message.text) <= 10:
+        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+            data['amount_photo'] = int(message.text)
+        calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
+        bot.send_message(message.chat.id, "Введите дату заезда", reply_markup=calendar)
+    else:
+        bot.send_message(message.from_user.id, "Количество фото должно быть от 1 до 10. Повторите попытку.")
