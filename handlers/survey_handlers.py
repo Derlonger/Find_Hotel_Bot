@@ -58,6 +58,20 @@ def clarify_city(call: CallbackQuery) -> None:
     bot.send_message(call.message.chat.id, 'Сколько отелей нужно найти?')
 
 
+@bot.message_handler(state=UserStates.amount_hotels, is_digit=False)
+def amount_hotels_incorrect(message: Message) -> None:
+    """
+    Функция, ожидающая некорректный ввод количества отелей.
+    Если количество отелей - не число - выводит сообщение об ошибке.
+
+    Args:
+        message: Сообщение Telegram
+
+    Returns: None
+    """
+    bot.send_message(message.from_user.id, 'Количество отелей должно быть от 1 до 10.\nПовторите попытку.')
+
+
 @bot.message_handler(state=UserStates.amount_hotels, is_digit=True)
 def get_amount_hotels(message: Message) -> None:
     """
