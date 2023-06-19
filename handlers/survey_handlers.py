@@ -6,6 +6,8 @@ from utils.get_cityes import parse_cities_dict
 from keyboards.inline.cities_for_choice import print_cities
 from utils.factories import for_city
 from keyboards.inline.yes_no_reply import get_yes_no
+from telegram_bot_calendar import DetailedTelegramCalendar
+from datetime import date, timedelta
 
 
 @bot.message_handler(state=UserStates.cities, is_digit=True)  # Если название города - цифры
@@ -69,6 +71,7 @@ def amount_hotels_incorrect(message: Message) -> None:
 
     Returns: None
     """
+    print(f"Сработал обработчик некорректного ввода количества отелей {message.text}")
     bot.send_message(message.from_user.id, 'Количество отелей должно быть от 1 до 10.\nПовторите попытку.')
 
 
@@ -83,9 +86,40 @@ def get_amount_hotels(message: Message) -> None:
 
     Returns: None
     """
+    print(f"Сработал обработчик корректного ввода количества отелей {message.text}")
     if 1 <= int(message.text) <= 10:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['amount_hotels'] = int(message.text)
         bot.send_message(message.from_user.id, "Желаете загрузить фото отелей?", reply_markup=get_yes_no())
     else:
         bot.send_message(message.from_user.id, 'Количество отелей в топе должно быть от 1 до 10')
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'yes' or call.data == 'no')
+def need_photo_reply(call: CallbackQuery) -> None:
+    """
+    Функция, реагирующая на нажатие кнопки 'да' и "нет" на вопрос о необходимости загрузить фото отелей.
+    Если ответ 'да': записывает состояние пользователя 'need_photo' = True и предлагает ввести количество фото.
+    Если ответ 'нет': записывает состояние пользователя 'need_photo' = False и 'amount_photo' = 0 и
+    показывает клавиатуру-календарь с выбором даты заезда
+    Args:
+        call: Отклик клавиатуры.
+    Returns: None
+    """
+    print(f"Сработал обработчик реагирующая на кнопки да или нет -- {call.data}")
+    bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=None)
+
+    with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
+        if call.data == "yes":
+            bot.send_message(call.message.chat.id, text='Введите количество фото')
+            data['need_photo'] = True
+            bot.set_state(call.from_user.id, UserStates.amount_photo, call.message.chat.id)
+        elif call.data == "no":
+            data['need_photo'] = False
+            data['amount_photo'] = 0
+            calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
+            bot.send_message(call.message.chat.id, "Введите дату заезда", reply_markup=calendar)
+        else:
+            bot.send_message(call.message.chat.id, text='Нажмите кнопку "Да" или "Нет"')
+
+
