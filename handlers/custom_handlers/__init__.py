@@ -1,2 +1,1 @@
-from . import lowprice
-from . import highprice
+from . import input_data

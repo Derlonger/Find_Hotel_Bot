@@ -10,13 +10,15 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 DEFAULT_COMMANDS = (
     ("start", "Запустить бота"),
-    ("help", "Вывести справку"),
-    ("lowprice", "Топ отелей по низкой цене")
+    ("help", "Помощь по командам бота"),
+    ("lowprice", "Вывод самых дешевых отелей в городе"),
+    ('highprice', "Вывод самых дорогих отелей в городе"),
+    ('bestdeal', "вывод отелей, наиболее подходящих по цене и расположению от центра"),
+    ('history', "Вывод истории поиска отелей")
 )
 
-RAPID_API_HEADERS = {
-    "X-RapidAPI-Key": RAPID_API_KEY,
-    "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
+RAPID_ENDPOINT = {
+    'search_cities': "https://hotels4.p.rapidapi.com/locations/v3/search",
+    'search_hotels': "https://hotels4.p.rapidapi.com/properties/v2/list",
+    'hotel_info': "https://hotels4.p.rapidapi.com/properties/v2/get-summary"
 }
-
-LOG_PATH = os.path.abspath(os.path.join('logs', 'debug.log'))

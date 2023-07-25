@@ -1,5 +1,3 @@
-from . import misc
-from . import api_reqwest
-from . import factories
-from . import get_cityes
+from . import api_request
+from . import processing_json
 from . import set_bot_commands
