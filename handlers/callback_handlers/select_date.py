@@ -1,38 +1,46 @@
 from loader import bot
-from telebot.types import CallbackQuery
-from telegram_bot_calendar import DetailedTelegramCalendar
+from telebot.types import CallbackQuery, ReplyKeyboardRemove
+from telegram_bot_calendar import DetailedTelegramCalendar, LSTEP
 from datetime import date, timedelta
 from loguru import logger
-from states.user_states import UserInputState
-from utils.show_data_and_find_hotels import print_data
 
 
-@bot.callback_query_handler(func=DetailedTelegramCalendar.func())
-def date_reply(call: CallbackQuery) -> None:
-    with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
-        if not data.get("start_date"):
-            result, key, step = DetailedTelegramCalendar(min_date=date.today()).process(call.data)
-        elif not data.get('end_date'):
-            new_start_date = data.get('start_date') + timedelta(1)
-            result, key, step = DetailedTelegramCalendar(min_date=new_start_date).process(call.data)
+@bot.callback_query_handler(func=DetailedTelegramCalendar.func(calendar_id=1))
+def send_start_calendar(callback: CallbackQuery) -> None:
+    result, key, step = DetailedTelegramCalendar(calendar_id=1, min_date=date.today(), locale='ru').process(
+        callback.data)
     if not result and key:
-        bot.edit_message_text("Введите дату: ", call.message.chat.id, call.message.message_id, reply_markup=key)
+        bot.edit_message_text(f'Выберите {LSTEP[step]} заезда',
+                              callback.message.chat.id,
+                              callback.message.message_id,
+                              reply_markup=key)
     elif result:
-        with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
-            if not data.get('start_date'):
-                logger.info('Ввод даты заезда: ' + call.message.text + f' User_id: {call.message.chat.id}')
-                data['start_date'] = result
-                calendar, step = DetailedTelegramCalendar(min_date=result + timedelta(1)).build()
-                bot.edit_message_text("Введите дату выезда:",
-                                      call.message.chat.id, call.message.message_id, reply_markup=calendar)
-            elif not data.get('end_date'):
-                logger.info('Ввод даты выезда: ' + call.message.text + f' User_id: {call.message.chat.id}')
-                data['end_date'] = result
-                bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
-    print(data)
-    if data['sort'] == 'DISTANCE':
-        bot.set_state(call.message.chat.id, UserInputState.landmarkIn)
-        bot.send_message(call.message.chat.id, 'Введите начало диапазона расстояния от центра(от 0 миль): ')
-    else:
-        print_data(call.message, data)
+        with bot.retrieve_data(callback.message.chat.id) as data:
+            data['start_date'] = result
+        bot.edit_message_text(f"Записал",
+                              callback.message.chat.id,
+                              callback.message.message_id, reply_markup=ReplyKeyboardRemove())
+        calendar, step = DetailedTelegramCalendar(calendar_id=2, min_date=date.today(), locale='ru').build()
+        bot.send_message(callback.message.chat.id, f"Выберите {LSTEP[step]} выезда",
+                         reply_markup=calendar)
 
+
+@bot.callback_query_handler(func=DetailedTelegramCalendar.func(calendar_id=2))
+def send_end_calendar(callback: CallbackQuery) -> None:
+    with bot.retrieve_data(callback.message.chat.id) as data:
+        new_start_date = data['start_date'] + timedelta(1)
+        result, key, step = DetailedTelegramCalendar(calendar_id=2, min_date=new_start_date, locale='ru').process(
+            callback.data)
+        if not result and key:
+            bot.edit_message_text(f"Выберите {LSTEP[step]} выезда",
+                                  callback.message.chat.id,
+                                  callback.message.message_id,
+                                  reply_markup=key)
+        elif result:
+            data['end_date'] = result
+            bot.edit_message_text(f"Дата заезда {data['start_date']}\n"
+                                  f"Дата выезда {result}",
+                                  callback.message.chat.id,
+                                  callback.message.message_id)
+
+# TODO Дописать логеры и завершить функцию

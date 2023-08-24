@@ -11,6 +11,7 @@ from keyboards.inline.create_buttons import show_cities_buttons, show_buttons_ph
 from telegram_bot_calendar import DetailedTelegramCalendar
 from utils.show_data_and_find_hotels import print_data
 
+
 @bot.message_handler(commands=['lowprice', 'highprice', 'bestdeal'])
 def low_high_best_handler(message: Message) -> None:
     """
@@ -129,7 +130,7 @@ def input_photo_quantity(message: Message) -> None:
             logger.info('Ввод и запись количества фотографий: ' + message.text + f' User_id: {message.chat.id}')
             with bot.retrieve_data(message.chat.id) as data:
                 data['photo_count'] = message.text
-            calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
+            calendar, step = DetailedTelegramCalendar(calendar_id=1, min_date=date.today()).build()
             bot.send_message(message.chat.id, "Введите дату заезда", reply_markup=calendar)
 
         else:
