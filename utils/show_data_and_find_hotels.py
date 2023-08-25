@@ -1,5 +1,4 @@
 import random
-
 from loader import bot
 from telebot.types import Message, Dict, InputMediaPhoto
 from loguru import logger
@@ -82,9 +81,9 @@ def find_and_show_hotels(message: Message, data: Dict) -> None:
     if response_hotels.status_code == 200:
         # Обработка полученного ответа от сервера и формирование отсортированного словаря с отелями
         hotels = get_hotels(response_text=response_hotels.text,
-                            command=data['command']
-                            # landmark_in=data['landmark_in'],
-                            # landmark_out=data['landmark_out']
+                            command=data['command'],
+                            landmark_in=data['landmark_in'],
+                            landmark_out=data['landmark_out']
                             )
         if 'error' in hotels:
             bot.send_message(message.chat.id, hotels['error'])
@@ -110,41 +109,43 @@ def find_and_show_hotels(message: Message, data: Dict) -> None:
                 if get_summary.status_code == 200:
                     summary_info = hotel_info(get_summary.text)
 
-                    caption = f'Название: {hotel["name"]}\n' \
-                              f'Адрес: {summary_info["address"]}\n' \
-                              f'Стоимость проживания в сутки: {hotel["price"]}\n' \
-                              f'Расстояние до центра: {round(hotel["distance"], 2)} mile.\n'
+                    caption = f'🏠Название: {hotel["name"]}\n' \
+                              f'📬Адрес: {summary_info["address"]}\n' \
+                              f'📬Стоимость проживания в сутки: {round(hotel["price"], 2)}\n' \
+                              f'🚗Расстояние до центра: {round(hotel["distance"], 2)} mile\n'
 
                     medias = []
                     links_to_images = []
-                    # сформируем рандомный список из ссылок на фотографии.
+                    # сформируем рандомный список из ссылок на фотографии, ибо фоток много, а надо только 10
                     try:
                         for random_url in range(int(data['photo_count'])):
-                            links_to_images.append(
-                                summary_info['images'][random.randint(0, len(summary_info['images']) - 1)])
+                            links_to_images.append(summary_info['images']
+                                                   [random.randint(0, len(summary_info['images']) - 1)])
                     except IndexError:
                         continue
-                    #
+
                     if int(data['photo_count']) > 0:
+                        # формируем MediaGroup с фотографиями и описанием отеля и посылаем в чат
                         for number, url in enumerate(links_to_images):
                             if number == 0:
                                 medias.append(InputMediaPhoto(media=url, caption=caption))
                             else:
                                 medias.append(InputMediaPhoto(media=url))
 
-                        logger.info(f"Выдаю найденную информацию в чат. User_Id: {message.chat.id}")
+                        logger.info(f"Выдаю найденную информацию в чат. User_id: {message.chat.id}")
                         bot.send_media_group(message.chat.id, medias)
 
                     else:
-                        # Если фотографии не нужны, то просто выводим информацию об отеле.
+                        # если фотки не нужны, то просто выводим данные об отеле
                         logger.info(f"Выдаю найденную информацию в чат. User_id: {message.chat.id}")
-                        bot.send_media_group(message.chat.id, medias)
+                        bot.send_message(message.chat.id, caption)
                 else:
-                    bot.send_message(message.chat.id, f'Что то пошло не так, код ошибки: {get_summary.status_code}')
+                    bot.send_message(message.chat.id, f'Что-то пошло не так, код ошибки: {get_summary.status_code}')
             else:
                 break
     else:
         bot.send_message(message.chat.id, f'Что-то пошло не так, код ошибки: {response_hotels.status_code}')
     logger.info(f"Поиск окончен. User_id: {message.chat.id}")
-    bot.send_message(message.chat.id, 'Поиск окончен!')
+    bot.send_message(message.chat.id, 'Поиск окончен!\n'
+                                      'Введите /help для выбора доступных команд.')
     bot.set_state(message.chat.id, None)
