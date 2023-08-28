@@ -108,12 +108,14 @@ def find_and_show_hotels(message: Message, data: Dict) -> None:
                 logger.info(f'Сервер вернул ответ {get_summary.status_code}. User_id: {message.chat.id}')
                 if get_summary.status_code == 200:
                     summary_info = hotel_info(get_summary.text)
+                    hotel_url = f'https://www.hotels.com/ho{str(hotel["id"])}'
 
                     caption = f'🏠Название: {hotel["name"]}\n' \
                               f'📬Адрес: {summary_info["address"]}\n' \
-                              f'📬Стоимость проживания в сутки: {round(hotel["price"], 2)}\n' \
-                              f'🚗Расстояние до центра: {round(hotel["distance"], 2)} mile\n'
-
+                              f'💲Стоимость проживания в сутки: {round(hotel["price"], 2)} $\n' \
+                              f'💲💲Стоимость проживания за период: {round(hotel["price"] * (data["end_date"] - data["start_date"]).days, 2)} $\n' \
+                              f'🚗Расстояние до центра: {round(hotel["distance"], 2)} mile\n' \
+                              f'Узнать более точную информацию об отеле: https://www.hotels.com/h{hotel["id"]}.Hotel-Information'
                     medias = []
                     links_to_images = []
                     # сформируем рандомный список из ссылок на фотографии, ибо фоток много, а надо только 10
@@ -146,6 +148,6 @@ def find_and_show_hotels(message: Message, data: Dict) -> None:
     else:
         bot.send_message(message.chat.id, f'Что-то пошло не так, код ошибки: {response_hotels.status_code}')
     logger.info(f"Поиск окончен. User_id: {message.chat.id}")
-    bot.send_message(message.chat.id, 'Поиск окончен!\n'
-                                      'Введите /help для выбора доступных команд.')
+    bot.send_message(message.chat.id, f"Вот как-то так.\nМожете ввести ещё какую-нибудь команду!\n"
+                                      f"Например: <b>/help</b>", parse_mode="html")
     bot.set_state(message.chat.id, None)
