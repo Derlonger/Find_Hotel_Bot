@@ -5,6 +5,8 @@ from loguru import logger
 from config_data.config import RAPID_ENDPOINT
 from utils.api_request import request
 from utils.processing_json import get_hotels, hotel_info
+import database.add_to_bd
+import database
 
 
 def print_data(message: Message, data: Dict):
@@ -14,6 +16,9 @@ def print_data(message: Message, data: Dict):
     :param data: Dict собранные данные от пользователя
     :return: None
     """
+    # Отправляем в базу данных собранные данные, а там уже выберу что нужно
+    database.add_to_bd.add_query(data)
+
     logger.info(f'Вывод суммарной информации о параметрах запроса пользователя. User_id: {message.chat.id}')
     text_message = ('Исходные данные: \n'
                     f'Дата и время запроса: {data["date_time"]}\n'
@@ -29,6 +34,8 @@ def print_data(message: Message, data: Dict):
                     f'Дата выезда: {data["end_date"]}\n')
     if data['sort'] == 'DISTANCE':
         bot.send_message(message.chat.id, text_message +
+                         f'Количество взрослы от 17 лет: {data["travellers_adults"]}\n'
+                         f'Количество детей до 17 лет: {data["children_count"]}\n'
                          f'Начало диапазона от центра: {data["landmark_in"]}\n'
                          f'Конец диапазона от центра: {data["landmark_out"]}')
     else:
@@ -44,6 +51,7 @@ def find_and_show_hotels(message: Message, data: Dict) -> None:
     :param data: Dict данные, собранные от пользователя.
     :return: None
     """
+    print(data)
     payload = {
         "currency": "USD",
         "eapid": 1,
@@ -62,7 +70,8 @@ def find_and_show_hotels(message: Message, data: Dict) -> None:
         },
         "rooms": [
             {
-                "adults": 1,
+                "adults": int(data['travellers_adults']),
+                "children": data['children_ages']
             }
         ],
         "resultsStartingIndex": 0,
@@ -108,14 +117,14 @@ def find_and_show_hotels(message: Message, data: Dict) -> None:
                 logger.info(f'Сервер вернул ответ {get_summary.status_code}. User_id: {message.chat.id}')
                 if get_summary.status_code == 200:
                     summary_info = hotel_info(get_summary.text)
-                    hotel_url = f'https://www.hotels.com/ho{str(hotel["id"])}'
-
+                    hotel_url = f"https://www.hotels.com/h{hotel['id']}.Hotel-Information"
+                    total_price = round(hotel["price"] * (data["end_date"] - data["start_date"]).days, 2)
                     caption = f'🏠Название: {hotel["name"]}\n' \
                               f'📬Адрес: {summary_info["address"]}\n' \
                               f'💲Стоимость проживания в сутки: {round(hotel["price"], 2)} $\n' \
-                              f'💲💲Стоимость проживания за период: {round(hotel["price"] * (data["end_date"] - data["start_date"]).days, 2)} $\n' \
+                              f'💲💲Стоимость проживания за период: {total_price} $\n' \
                               f'🚗Расстояние до центра: {round(hotel["distance"], 2)} mile\n' \
-                              f'Узнать более точную информацию об отеле: https://www.hotels.com/h{hotel["id"]}.Hotel-Information'
+                              f'🪧Узнать более точную информацию об отеле: {hotel_url}'
                     medias = []
                     links_to_images = []
                     # сформируем рандомный список из ссылок на фотографии, ибо фоток много, а надо только 10
@@ -126,6 +135,17 @@ def find_and_show_hotels(message: Message, data: Dict) -> None:
                     except IndexError:
                         continue
 
+                    # Не важно, нужны пользователю фотографии или нет ссылки на них мы передаем в функцию
+                    # для сохранения в базе данных
+                    data_to_db = {
+                        hotel['id']: {
+                            'name': hotel['name'], 'address': summary_info['address'], 'user_id': message.chat.id,
+                            'price': hotel['price'], 'total_price_day': total_price,
+                            'distance': round(hotel['distance'], 2),
+                            'date_time': data['date_time'], 'images': links_to_images, 'url_hotel': hotel_url
+                        }
+                    }
+                    database.add_to_bd.add_response(data_to_db)
                     if int(data['photo_count']) > 0:
                         # формируем MediaGroup с фотографиями и описанием отеля и посылаем в чат
                         for number, url in enumerate(links_to_images):
