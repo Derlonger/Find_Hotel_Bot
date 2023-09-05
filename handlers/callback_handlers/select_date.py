@@ -49,7 +49,8 @@ def send_end_calendar(callback: CallbackQuery) -> None:
             data['end_date'] = result
             data['landmark_in'] = 0
             data['landmark_out'] = 0
-            print(data)
+            data['travellers_adults'] = 1
+            data['children_ages'] = []
             if data['sort'] == 'DISTANCE':
                 bot.set_state(callback.message.chat.id, UserInputState.landmarkIn)
                 bot.send_message(callback.message.chat.id, 'Введите начало диапазона расстояния от центра '
