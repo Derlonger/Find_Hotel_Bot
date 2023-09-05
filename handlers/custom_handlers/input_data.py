@@ -7,9 +7,10 @@ from states.user_states import UserInputState
 from config_data.config import RAPID_ENDPOINT
 from utils.api_request import request
 from utils.processing_json import get_city
-from keyboards.inline.create_buttons import show_cities_buttons, show_buttons_photo_need_yes_no
+from keyboards.inline.create_buttons import show_cities_buttons, show_buttons_photo_need_yes_no, show_age_of_child
 from telegram_bot_calendar import DetailedTelegramCalendar
 from utils.show_data_and_find_hotels import print_data
+from utils.are_all_numbers import are_all_numbers
 
 
 @bot.message_handler(commands=['lowprice', 'highprice', 'bestdeal'])
@@ -70,7 +71,7 @@ def input_quantity(message: Message) -> None:
             with bot.retrieve_data(message.chat.id) as data:
                 data['quantity_hotels'] = message.text
             bot.set_state(message.chat.id, UserInputState.priceMin)
-            bot.send_message(message.chat.id, 'Введите минимальную стоимость отеля в долларах США: ')
+            bot.send_message(message.chat.id, 'Введите минимальную стоимость отеля за сутки в долларах США: ')
         else:
             bot.send_message(message.chat.id,
                              'Ошибка! Это должно быть число в диапазоне от 1 до 10! Повторите попытку!')
@@ -91,7 +92,7 @@ def input_price_min(message: Message) -> None:
         with bot.retrieve_data(message.chat.id) as data:
             data['price_min'] = message.text
         bot.set_state(message.chat.id, UserInputState.priceMax)
-        bot.send_message(message.chat.id, 'Введите максимальную стоимость отеля в долларах США')
+        bot.send_message(message.chat.id, 'Введите максимальную стоимость отеля за сутки в долларах США')
     else:
         bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите попытку!')
 
@@ -167,9 +168,55 @@ def input_landmark_out(message: Message) -> None:
         logger.info('Ввод и запись конца диапазона от центра: ' + message.text + f' User_id: {message.chat.id}')
         with bot.retrieve_data(message.chat.id) as data:
             data['landmark_out'] = message.text
-            print_data(message, data)
+            bot.set_state(message.chat.id, UserInputState.travellers_adults)
+            bot.send_message(message.chat.id, "Введите количество взрослых от 17 лет (от 1 до 14): ")
     else:
         bot.send_message(message.chat.id, "Ошибка! Вы ввели не число! Повторите попытку ввода!")
+
+
+@bot.message_handler(state=UserInputState.travellers_adults)
+def input_travellers_adults(message: Message) -> None:
+    """
+    Функция ввода количества взрослых.
+    :param message: Сообщение Telegram
+    :return: None
+    """
+    if message.text.isdigit():
+        if 1 <= int(message.text) <= 16:
+            logger.info('Ввод и запись количества взрослых: ' + message.text + f' User_id: {message.chat.id}')
+            with bot.retrieve_data(message.chat.id) as data:
+                data['travellers_adults'] = int(message.text)
+                bot.set_state(message.chat.id, UserInputState.travellers_children)
+                bot.send_message(message.chat.id, "Введите возраст детей через пробел:\n"
+                                                  "Если детей нет поставьте 0", )
+        else:
+            bot.send_message(message.chat.id, "Ошибка! Вы вышли из диапазона от 0-17! Повторите попытку ввода!")
+    else:
+        bot.send_message(message.chat.id, "Ошибка! Вы ввели не число! Повторите попытку ввода!")
+
+
+@bot.message_handler(state=UserInputState.travellers_children)
+def input_travellers_children(message: Message) -> None:
+    """
+    Ввод возраста детей.
+    :param message: Сообщение Telegram
+    :return: None
+    """
+    with bot.retrieve_data(message.chat.id) as data:
+        if message.text == "0":
+            data["children_count"] = 0
+        else:
+            if are_all_numbers(message.text.split()):
+                ages = []
+                count = 0
+                for i in message.text.split():
+                    count += 1
+                    ages.append({"age": int(i)})
+                data["children_count"] = count
+                data['children_ages'] = ages
+                print_data(message, data)
+            else:
+                bot.send_message(message.chat.id, f"Ошибка ввода, необходимо ввести через пробел цифры.Пример: 2, 3, 4")
 
 
 def check_command(command: str) -> str:
