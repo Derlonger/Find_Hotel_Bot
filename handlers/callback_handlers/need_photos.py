@@ -26,5 +26,6 @@ def need_photo_callback(call: CallbackQuery) -> None:
             data['photo_need'] = call.data
             data['photo_count'] = '0'
         bot.delete_message(call.message.chat.id, call.message.message_id)
-        calendar, step = DetailedTelegramCalendar(calendar_id=1, min_date=date.today(), locale='ru').build()
+        calendar, step = DetailedTelegramCalendar(calendar_id=1, min_date=date.today()).build()
         bot.send_message(call.message.chat.id, "Введите дату заезда", reply_markup=calendar)
+
