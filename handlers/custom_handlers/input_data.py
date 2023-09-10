@@ -70,108 +70,13 @@ def input_quantity(message: Message) -> None:
             logger.info('Ввод и запись количества отелей: ' + message.text + f' User_Id: {message.chat.id}')
             with bot.retrieve_data(message.chat.id) as data:
                 data['quantity_hotels'] = message.text
-            bot.set_state(message.chat.id, UserInputState.priceMin)
-            bot.send_message(message.chat.id, 'Введите минимальную стоимость отеля за сутки в долларах США: ')
+                bot.set_state(message.chat.id, UserInputState.travellers_adults)
+                bot.send_message(message.chat.id, "Введите количество взрослых от 17 лет (от 1 до 14): ")
         else:
             bot.send_message(message.chat.id,
                              'Ошибка! Это должно быть число в диапазоне от 1 до 10! Повторите попытку!')
     else:
         bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите попытку!')
-
-
-@bot.message_handler(state=UserInputState.priceMin)
-def input_price_min(message: Message) -> None:
-    """
-    Функция для ввода минимальной стоимости отеля и проверка чтобы это было число.
-    :param message: Сообщение Telegram
-    :return: None
-    """
-    if message.text.isdigit():
-        logger.info(
-            'Ввод и запись минимальной стоимости отеля: ' + message.text + f' User_id: {message.chat.id}')
-        with bot.retrieve_data(message.chat.id) as data:
-            data['price_min'] = message.text
-        bot.set_state(message.chat.id, UserInputState.priceMax)
-        bot.send_message(message.chat.id, 'Введите максимальную стоимость отеля за сутки в долларах США')
-    else:
-        bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите попытку!')
-
-
-@bot.message_handler(state=UserInputState.priceMax)
-def input_price_max(message: Message) -> None:
-    """
-    Функция для ввода максимальной стоимости отеля и проверка чтобы это было число.
-    Максимальная стоимость не может быть меньше минимальной.
-    :param message: Сообщение Telegram
-    :return: None
-    """
-    if message.text.isdigit():
-        logger.info('Ввод и запись максимальной стоимости отеля, сравнение с priceMin '
-                    + message.text + f' User_id: {message.chat.id}')
-        with bot.retrieve_data(message.chat.id) as data:
-            if int(data['price_min']) < int(message.text):
-                data['price_max'] = message.text
-                show_buttons_photo_need_yes_no(message)
-            else:
-                bot.send_message(message.chat.id,
-                                 'Максимальная цена должна быть больше минимальной. Повторите попытку ввода!')
-    else:
-        bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите попытку ввода!')
-
-
-@bot.message_handler(state=UserInputState.photo_count)
-def input_photo_quantity(message: Message) -> None:
-    """
-    Функция для ввода количества фотографий и проверка на число, и на соответствие заданному диапазону от 1 до 10.
-    :param message: Сообщение Telegram
-    :return: None
-    """
-    if message.text.isdigit():
-        if 0 < int(message.text) <= 10:
-            logger.info('Ввод и запись количества фотографий: ' + message.text + f' User_id: {message.chat.id}')
-            with bot.retrieve_data(message.chat.id) as data:
-                data['photo_count'] = message.text
-            calendar, step = DetailedTelegramCalendar(calendar_id=1, min_date=date.today()).build()
-            bot.send_message(message.chat.id, "Введите дату заезда", reply_markup=calendar)
-
-        else:
-            bot.send_message(message.chat.id, 'Число фотографий должно быть в диапазоне от 1 до 10! Повторите ввод!')
-    else:
-        bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите ввод!')
-
-
-@bot.message_handler(state=UserInputState.landmarkIn)
-def input_landmark_in(message: Message) -> None:
-    """
-    Функция ввода начала диапазона расстояние до центра
-    :param message: Сообщение Telegram
-    :return: None
-    """
-    if message.text.isdigit():
-        logger.info('Ввод и запись начала диапазона от центра: ' + message.text + f" User_id: {message.chat.id}")
-        with bot.retrieve_data(message.chat.id) as data:
-            data['landmark_in'] = message.text
-        bot.set_state(message.chat.id, UserInputState.landmarkOut)
-        bot.send_message(message.chat.id, 'Введите конец диапазона расстояний от центра(в милях).')
-    else:
-        bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите попытку ввода!')
-
-
-@bot.message_handler(state=UserInputState.landmarkOut)
-def input_landmark_out(message: Message) -> None:
-    """
-    Функция ввода конца диапазона расстояния до центра.
-    :param message: Сообщение Telegram
-    :return: None
-    """
-    if message.text.isdigit():
-        logger.info('Ввод и запись конца диапазона от центра: ' + message.text + f' User_id: {message.chat.id}')
-        with bot.retrieve_data(message.chat.id) as data:
-            data['landmark_out'] = message.text
-            bot.set_state(message.chat.id, UserInputState.travellers_adults)
-            bot.send_message(message.chat.id, "Введите количество взрослых от 17 лет (от 1 до 14): ")
-    else:
-        bot.send_message(message.chat.id, "Ошибка! Вы ввели не число! Повторите попытку ввода!")
 
 
 @bot.message_handler(state=UserInputState.travellers_adults)
@@ -214,9 +119,103 @@ def input_travellers_children(message: Message) -> None:
                     ages.append({"age": int(i)})
                 data["children_count"] = count
                 data['children_ages'] = ages
-                print_data(message, data)
+                show_buttons_photo_need_yes_no(message)
             else:
                 bot.send_message(message.chat.id, f"Ошибка ввода, необходимо ввести через пробел цифры.Пример: 2, 3, 4")
+
+
+@bot.message_handler(state=UserInputState.photo_count)
+def input_photo_quantity(message: Message) -> None:
+    """
+    Функция для ввода количества фотографий и проверка на число, и на соответствие заданному диапазону от 1 до 10.
+    :param message: Сообщение Telegram
+    :return: None
+    """
+    if message.text.isdigit():
+        if 0 < int(message.text) <= 10:
+            logger.info('Ввод и запись количества фотографий: ' + message.text + f' User_id: {message.chat.id}')
+            with bot.retrieve_data(message.chat.id) as data:
+                data['photo_count'] = message.text
+                calendar, step = DetailedTelegramCalendar(calendar_id=1, min_date=date.today()).build()
+                bot.send_message(message.chat.id, "Введите дату заезда", reply_markup=calendar)
+        else:
+            bot.send_message(message.chat.id, 'Число фотографий должно быть в диапазоне от 1 до 10! Повторите ввод!')
+    else:
+        bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите ввод!')
+
+
+@bot.message_handler(state=UserInputState.priceMin)
+def input_price_min(message: Message) -> None:
+    """
+    Функция для ввода минимальной стоимости отеля и проверка чтобы это было число.
+    :param message: Сообщение Telegram
+    :return: None
+    """
+    if message.text.isdigit():
+        logger.info(
+            'Ввод и запись минимальной стоимости отеля: ' + message.text + f' User_id: {message.chat.id}')
+        with bot.retrieve_data(message.chat.id) as data:
+            data['price_min'] = message.text
+        bot.set_state(message.chat.id, UserInputState.priceMax)
+        bot.send_message(message.chat.id, 'Введите максимальную стоимость отеля за сутки в долларах США')
+    else:
+        bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите попытку!')
+
+
+@bot.message_handler(state=UserInputState.priceMax)
+def input_price_max(message: Message) -> None:
+    """
+    Функция для ввода максимальной стоимости отеля и проверка чтобы это было число.
+    Максимальная стоимость не может быть меньше минимальной.
+    :param message: Сообщение Telegram
+    :return: None
+    """
+    if message.text.isdigit():
+        logger.info('Ввод и запись максимальной стоимости отеля, сравнение с priceMin '
+                    + message.text + f' User_id: {message.chat.id}')
+        with bot.retrieve_data(message.chat.id) as data:
+            if int(data['price_min']) < int(message.text):
+                data['price_max'] = message.text
+                bot.set_state(message.chat.id, UserInputState.landmarkIn)
+                bot.send_message(message.chat.id, f'Введите начало диапазона расстояний от центра(в милях, от 0).')
+            else:
+                bot.send_message(message.chat.id,
+                                 'Максимальная цена должна быть больше минимальной. Повторите попытку ввода!')
+    else:
+        bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите попытку ввода!')
+
+
+@bot.message_handler(state=UserInputState.landmarkIn)
+def input_landmark_in(message: Message) -> None:
+    """
+    Функция ввода начала диапазона расстояние до центра
+    :param message: Сообщение Telegram
+    :return: None
+    """
+    if message.text.isdigit():
+        logger.info('Ввод и запись начала диапазона от центра: ' + message.text + f" User_id: {message.chat.id}")
+        with bot.retrieve_data(message.chat.id) as data:
+            data['landmark_in'] = message.text
+        bot.set_state(message.chat.id, UserInputState.landmarkOut)
+        bot.send_message(message.chat.id, 'Введите конец диапазона расстояний от центра(в милях, от 0).')
+    else:
+        bot.send_message(message.chat.id, 'Ошибка! Вы ввели не число! Повторите попытку ввода!')
+
+
+@bot.message_handler(state=UserInputState.landmarkOut)
+def input_landmark_out(message: Message) -> None:
+    """
+    Функция ввода конца диапазона расстояния до центра. И вызов функции print_data, для вывода выбранной информации.
+    :param message: Сообщение Telegram
+    :return: None
+    """
+    if message.text.isdigit():
+        logger.info('Ввод и запись конца диапазона от центра: ' + message.text + f' User_id: {message.chat.id}')
+        with bot.retrieve_data(message.chat.id) as data:
+            data['landmark_out'] = message.text
+            print_data(message, data)
+    else:
+        bot.send_message(message.chat.id, "Ошибка! Вы ввели не число! Повторите попытку ввода!")
 
 
 def check_command(command: str) -> str:
