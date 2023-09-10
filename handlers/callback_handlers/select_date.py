@@ -49,12 +49,12 @@ def send_end_calendar(callback: CallbackQuery) -> None:
             data['end_date'] = result
             data['landmark_in'] = 0
             data['landmark_out'] = 0
-            data['travellers_adults'] = 1
-            data['children_ages'] = []
+            data['price_min'] = 1
+            data['price_max'] = 10000
             if data['sort'] == 'DISTANCE':
-                bot.set_state(callback.message.chat.id, UserInputState.landmarkIn)
-                bot.send_message(callback.message.chat.id, 'Введите начало диапазона расстояния от центра '
-                                                           '(от 0 миль).')
+                bot.set_state(callback.message.chat.id, UserInputState.priceMin)
+                bot.send_message(callback.message.chat.id,
+                                 'Введите минимальную стоимость отеля за сутки в долларах США: ')
             else:
                 utils.show_data_and_find_hotels.print_data(callback.message, data)
 
