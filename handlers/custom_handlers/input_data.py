@@ -7,10 +7,9 @@ from states.user_states import UserInputState
 from config_data.config import RAPID_ENDPOINT
 from utils.api_request import request
 from utils.processing_json import get_city
-from keyboards.inline.create_buttons import show_cities_buttons, show_buttons_photo_need_yes_no, show_age_of_child
+from keyboards.inline.create_buttons import show_cities_buttons, show_buttons_photo_need_yes_no
 from telegram_bot_calendar import DetailedTelegramCalendar
 from utils.show_data_and_find_hotels import print_data
-from utils.are_all_numbers import are_all_numbers
 
 
 @bot.message_handler(commands=['lowprice', 'highprice', 'bestdeal'])
@@ -92,8 +91,8 @@ def input_travellers_adults(message: Message) -> None:
             with bot.retrieve_data(message.chat.id) as data:
                 data['travellers_adults'] = int(message.text)
                 bot.set_state(message.chat.id, UserInputState.travellers_children)
-                bot.send_message(message.chat.id, "Введите возраст детей через пробел:\n"
-                                                  "Если детей нет поставьте 0", )
+                bot.send_message(message.chat.id, "Введите количество детей от 1 до 6: \n"
+                                                  "Если детей нет 0.")
         else:
             bot.send_message(message.chat.id, "Ошибка! Вы вышли из диапазона от 0-17! Повторите попытку ввода!")
     else:
@@ -103,25 +102,52 @@ def input_travellers_adults(message: Message) -> None:
 @bot.message_handler(state=UserInputState.travellers_children)
 def input_travellers_children(message: Message) -> None:
     """
-    Ввод возраста детей.
+    Функция получает количества детей и после чего запускает опрос по возрасту каждого ребенка.
     :param message: Сообщение Telegram
     :return: None
     """
-    with bot.retrieve_data(message.chat.id) as data:
-        if message.text == "0":
-            data["children_count"] = 0
+    if message.text.isdigit():
+        if 0 <= int(message.text) <= 6:
+            logger.info('Ввод и запись количества детей: ' + message.text + f' User_id: {message.chat.id}')
+            with bot.retrieve_data(message.chat.id) as data:
+                data['children_count'] = int(message.text)
+                bot.send_message(message.chat.id,
+                                 f"Отлично! Теперь необходимо ввести возраст каждого ребенка по очереди!")
+                bot.register_next_step_handler(message, get_child_age)
         else:
-            if are_all_numbers(message.text.split()):
-                ages = []
-                count = 0
-                for i in message.text.split():
-                    count += 1
-                    ages.append({"age": int(i)})
-                data["children_count"] = count
-                data['children_ages'] = ages
-                show_buttons_photo_need_yes_no(message)
-            else:
-                bot.send_message(message.chat.id, f"Ошибка ввода, необходимо ввести через пробел цифры.Пример: 2, 3, 4")
+            bot.send_message(message.chat.id, "Необходимо ввести число от 0 до 6!\n"
+                                              "Повторите попытку.")
+    else:
+        bot.send_message(message.chat.id, "Необходимо ввести число от 0 до 6!\n"
+                                          "Повторите попытку.")
+
+
+children_data = []
+
+
+def get_child_age(message: Message) -> None:
+    """
+    Функция ввода и записи возраста каждого ребенка.
+    :param message: Сообщение Telegram
+    :return: None
+    """
+    try:
+        select_age = int(message.text)
+        if 1 <= select_age <= 17:
+            logger.info(
+                f'Ввод и запись возраст {len(children_data) + 1}-го ребенка: ' + message.text + f' User_id: {message.chat.id}')
+            with bot.retrieve_data(message.chat.id) as data:
+                children_data.append({'age': select_age})
+                if len(children_data) < data['children_count']:
+                    bot.send_message(message.chat.id, f"Введите возраст {len(children_data) + 1}-го ребенка:")
+                    bot.register_next_step_handler(message, get_child_age)
+                else:
+                    data['children_ages'] = children_data
+                    show_buttons_photo_need_yes_no(message)
+        else:
+            bot.send_message(message.chat.id, "Пожалуйста, введите возраст от 1 до 17")
+    except ValueError:
+        bot.send_message(message.chat.id, "Пожалуйста введите возраст с клавиатуры.")
 
 
 @bot.message_handler(state=UserInputState.photo_count)
@@ -228,3 +254,5 @@ def check_command(command: str) -> str:
         return 'DISTANCE'
     elif command == '/lowprice' or command == '/highprice':
         return 'PRICE_LOW_TO_HIGH'
+
+# TODO Разобраться с командой highprice
