@@ -60,22 +60,15 @@ def get_hotels(
             continue
     # Сортируем по цене, от высокой стоимости, к меньшей.
     if command == '/highprice':
-        hotels_data = {
-            key: value for key, value in
-            sorted(hotels_data.items(), key=lambda hotel_id: hotel_id[1]['price'], reverse=True)
-        }
-    # Обнуляем созданный ранее словарь и добавляем туда только те отели, которые соответствуют диапазону.
+        sorted_data = sorted(hotels_data.items(), key=lambda x: (x[1]['price'], x[1]['distance']), reverse=True)
+        # Преобразование отсортированных данных обратно в словарь
+        hotels_data = {k: v for k, v in sorted_data}
+    # Сортируем по наилучшим показателям стоимость и расстояние от центра.
     elif command == 'bestdeal':
-        hotels_data = {}
-        for hotel in data['data']['propertySearch']["properties"]:
-            if float(landmark_in) < hotel['destinationInfo']['distanceFromDestination']['value'] < float(landmark_out):
-                hotels_data[hotel['id']] = {
-                    'name': hotel['name'], 'id': hotel['id'],
-                    'distance': hotel['destinationInfo']['distanceFromDestination']['value'],
-                    'unit': hotel['destinationInfo']['distanceFromDestination']['unit'],
-                    'price': hotel['price']['lead']['amount']
-                }
-
+        sorted_data = sorted(hotels_data.items(), key=lambda x: (x[1]['price'], x[1]['distance']))
+        # Преобразование отсортированных данных обратно в словарь
+        hotels_data = {k: v for k, v in sorted_data}
+    print(hotels_data)
     return hotels_data
 
 
