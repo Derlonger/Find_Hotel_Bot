@@ -29,16 +29,3 @@ def show_cities_buttons(message: Message, possible_cities: Dict) -> None:
     for key, value in possible_cities.items():
         keyboards_cities.add(InlineKeyboardButton(text=value['regionNames'], callback_data=value['gaiaId']))
     bot.send_message(message.from_user.id, "Пожалуйста, выберите город", reply_markup=keyboards_cities)
-
-
-def show_age_of_child(message: Message):
-    """
-    Функция с выводом Inline-клавиатуры количество детей.
-    :param message: Сообщение Telegram
-    :return: None
-    """
-    logger.info(f"Вывод кнопок с вариантами возраста ребенка. User_id: {message.chat.id}")
-    markup = InlineKeyboardMarkup(row_width=4)
-    age_buttons = [InlineKeyboardButton(str(i), callback_data=i) for i in range(0, 7)]
-    markup.add(*age_buttons)
-    return markup
