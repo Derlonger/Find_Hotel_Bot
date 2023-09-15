@@ -254,5 +254,3 @@ def check_command(command: str) -> str:
         return 'DISTANCE'
     elif command == '/lowprice' or command == '/highprice':
         return 'PRICE_LOW_TO_HIGH'
-
-# TODO Разобраться с командой highprice
