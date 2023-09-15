@@ -1,3 +1,5 @@
+import time
+
 import requests
 from config_data import config
 
@@ -21,4 +23,5 @@ def request(method: str, url: str, query_string: dict) -> requests.Response:
         return response_get
     elif method == "POST":
         response_post = requests.request("POST", url, json=query_string, headers=headers)
+        time.sleep(1)
         return response_post
