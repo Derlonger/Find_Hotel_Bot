@@ -107,7 +107,13 @@ def input_travellers_children(message: Message) -> None:
     :return: None
     """
     if message.text.isdigit():
-        if 0 <= int(message.text) <= 6:
+        if int(message.text) == 0:
+            with bot.retrieve_data(message.chat.id) as data:
+                data['children_count'] = 0
+                data['children_ages'] = []
+                show_buttons_photo_need_yes_no(message)
+                return
+        if 1 <= int(message.text) <= 6:
             logger.info('Ввод и запись количества детей: ' + message.text + f' User_id: {message.chat.id}')
             with bot.retrieve_data(message.chat.id) as data:
                 data['children_count'] = int(message.text)
@@ -135,7 +141,8 @@ def get_child_age(message: Message) -> None:
         select_age = int(message.text)
         if 1 <= select_age <= 17:
             logger.info(
-                f'Ввод и запись возраст {len(children_data) + 1}-го ребенка: ' + message.text + f' User_id: {message.chat.id}')
+                f'Ввод и запись возраст {len(children_data) + 1}-го ребенка: ' + message.text +
+                f' User_id: {message.chat.id}')
             with bot.retrieve_data(message.chat.id) as data:
                 children_data.append({'age': select_age})
                 if len(children_data) < data['children_count']:
